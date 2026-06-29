@@ -7,7 +7,7 @@ process STAR_ALIGN {
     tag "$meta.id"
     label 'process_high'
 
-    conda 'bioconda::star=2.7.10b'
+    conda 'bioconda::star=2.7.10b conda-forge::pigz'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/star:2.7.10b--h9ee0642_0' :
         'biocontainers/star:2.7.10b--h9ee0642_0' }"
@@ -86,16 +86,16 @@ process STAR_ALIGN {
 
     if [ -f ${prefix}.Unmapped.out.mate1 ]; then
         mv ${prefix}.Unmapped.out.mate1 ${prefix}.unmapped_1.fastq
-        gzip ${prefix}.unmapped_1.fastq
+        pigz -p $task.cpus ${prefix}.unmapped_1.fastq
     fi
     if [ -f ${prefix}.Unmapped.out.mate2 ]; then
         mv ${prefix}.Unmapped.out.mate2 ${prefix}.unmapped_2.fastq
-        gzip ${prefix}.unmapped_2.fastq
+        pigz -p $task.cpus ${prefix}.unmapped_2.fastq
     fi
 
     if [ -d ${prefix}.Solo.out ]; then
         # Backslashes still need to be escaped (https://github.com/nextflow-io/nextflow/issues/67)
-        find ${prefix}.Solo.out \\( -name "*.tsv" -o -name "*.mtx" \\) -exec gzip {} \\;
+        find ${prefix}.Solo.out \\( -name "*.tsv" -o -name "*.mtx" \\) -exec pigz -p $task.cpus {} \\;
     fi
 
     if [ -d ${prefix}.Solo.out/Velocyto ]; then
